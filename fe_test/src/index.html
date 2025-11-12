@@ -1,15 +1,128 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test GraphQl</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login GraphQL + Acción</title>
 </head>
-
 <body>
-    <div id="root"></div>
-</body>
+  <h2>🔐 Login</h2>
+  <input type="email" id="email" placeholder="Email" /><br>
+  <input type="password" id="password" placeholder="Contraseña" /><br>
+  <button id="loginBtn">Ingresar</button>
 
+  <div id="afterLogin" style="display:none; margin-top:20px;">
+    <hr>
+    <h3>✅ Bienvenido</h3>
+    <button id="actionBtn">Ver vehiculos</button>
+    <div id="vehicles" style="margin-top:20px;"></div>
+  </div>
+
+  <script>
+    const API_URL = "http://localhost:4001/graphql";
+    let token = null;
+
+    // === LOGIN ===
+    document.getElementById("loginBtn").addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      if (!email || !password) {
+        alert("Por favor ingresa tu correo y contraseña");
+        return;
+      }
+
+      const query = `
+        mutation {
+          authUser(authInput: { email: "${email}", password: "${password}" }) {
+            token
+          }
+        }
+      `;
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query }),
+        });
+
+        const data = await res.json();
+        if (data.errors) {
+          alert("Error: " + data.errors[0].message);
+          return;
+        }
+
+        token = data.data.authUser.token;
+        localStorage.setItem("token", token);
+        alert("Login exitoso ✅");
+
+        // Muestra la sección de acción
+        document.getElementById("afterLogin").style.display = "block";
+      } catch (error) {
+        console.error(error);
+        alert("Error en login");
+      }
+    });
+
+    // === BOTÓN "HACER ALGO" ===
+    document.getElementById("actionBtn").addEventListener("click", async () => {
+      if (!token) {
+        alert("Primero inicia sesión");
+        return;
+      }
+
+      const query = `
+        query {
+          getVehicleInMongo {
+            placa
+            tipoVehiculo
+            rendimientoTeorico
+            CentroOperacion {
+              id
+            }
+          }
+        }
+      `;
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token,
+          },
+          body: JSON.stringify({ query }),
+        });
+
+        const data = await res.json();
+
+        if (data.errors) {
+          console.error(data.errors);
+          alert("Error al obtener vehículos");
+          return;
+        }
+
+        const list = data.data.getVehicleInMongo;
+        const container = document.getElementById("vehicles");
+        container.innerHTML = "";
+
+        if (!list || list.length === 0) {
+          container.textContent = "No hay vehículos registrados.";
+          return;
+        }
+
+        list.forEach(v => {
+          const div = document.createElement("div");
+          div.innerHTML = `
+            <p><strong>${v.placa}</strong> - ${v.tipoVehiculo} - Rendimiento: ${v.rendimientoTeorico} - Centro: ${v.CentroOperacion.id}</p>
+          `;
+          container.appendChild(div);
+        });
+      } catch (error) {
+        console.error(error);
+        alert("Error al cargar vehículos");
+      }
+    });
+  </script>
+</body>
 </html>
