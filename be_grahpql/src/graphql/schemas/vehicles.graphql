@@ -1,0 +1,34 @@
+type Query {
+    getVehicles: [Vehicle]
+    getVehicleByPlate(placa: String!): [Vehicle]
+    getVehicleInMongo: [Vehicle] 
+}
+
+type Vehicle {
+    placa: String!
+    tipoVehiculo: String!
+    rendimientoTeorico: Float!
+    CentroOperacion : [CentroOperacion]
+}
+
+type Mutation {
+    createVehicleInMongo(vehicle: VehicleInput!): String
+    updateVehicle(placa: String!, input: VehicleEdit): Vehicle
+    deleteVehicle(placa: String!): Boolean
+}
+
+input VehicleEdit {
+    tipoVehiculo: String!
+    rendimientoTeorico: Float
+    CentroOperacion: [ID]
+}
+
+input VehicleInput {
+    placa: String!
+    tipoVehiculo: String!
+    rendimientoTeorico: Float
+    CentroOperacion: [ID]
+}
+extend type Mutation {
+  createVehicle(vehicle: VehicleInput!): Vehicle
+}

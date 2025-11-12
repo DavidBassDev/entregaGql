@@ -1,0 +1,24 @@
+type Query{
+    getCos : [CentroOperacion]
+    createCopInMongo: [CentroOperacion] 
+    getCenOpInMongo: [CentroOperacion] 
+}
+
+type CentroOperacion {
+id: ID 
+nombre: String!
+
+}
+
+type Mutation {
+    
+     createCopInMongo(cop: CopInput!): String
+
+    
+
+}
+
+input CopInput {
+    _id: ID!
+    nombre: String!
+}
