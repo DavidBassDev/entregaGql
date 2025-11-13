@@ -20,14 +20,14 @@ type Mutation {
 input VehicleEdit {
     tipoVehiculo: String!
     rendimientoTeorico: Float
-    CentroOperacion: [ID]
+    CentroOperacion: [String]
 }
 
 input VehicleInput {
     placa: String!
     tipoVehiculo: String!
     rendimientoTeorico: Float
-    CentroOperacion: [ID]
+    CentroOperacion: [String]
 }
 extend type Mutation {
   createVehicle(vehicle: VehicleInput!): Vehicle

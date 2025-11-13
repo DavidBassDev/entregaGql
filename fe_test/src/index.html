@@ -1,127 +1,157 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login GraphQL + Acción</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login + Vehículos + Cálculo</title>
 </head>
 <body>
-  <h2>🔐 Login</h2>
-  <input type="email" id="email" placeholder="Email" /><br>
-  <input type="password" id="password" placeholder="Contraseña" /><br>
-  <button id="loginBtn">Ingresar</button>
+  <h1>Autenticación y Vehículos</h1>
 
-  <div id="afterLogin" style="display:none; margin-top:20px;">
-    <hr>
-    <h3>✅ Bienvenido</h3>
-    <button id="actionBtn">Ver vehiculos</button>
-    <div id="vehicles" style="margin-top:20px;"></div>
+  <!-- Sección de login -->
+  <div id="login-section">
+    <h2>Iniciar sesión</h2>
+    <input type="email" id="email" placeholder="Correo electrónico" /><br />
+    <input type="password" id="password" placeholder="Contraseña" /><br />
+    <button id="loginBtn">Login</button>
+    <p id="login-status"></p>
+  </div>
+
+  <!-- Sección de vehículos -->
+  <div id="vehicles-section" style="display:none;">
+    <h2>Vehículos registrados</h2>
+    <select id="vehicleSelect">
+      <option value="">-- Selecciona un vehículo --</option>
+    </select>
+    <p id="vehicleInfo"></p>
+
+    <h3>Operación con números</h3>
+    <input type="number" id="num1" placeholder="Número 1" /><br />
+    <input type="number" id="num2" placeholder="Número 2" /><br />
+    <br />
+
+    <button id="calculateBtn">Calcular</button>
+    <button id="doSomethingBtn">Hacer algo</button>
+
+    <p id="calcResult"></p>
   </div>
 
   <script>
     const API_URL = "http://localhost:4001/graphql";
-    let token = null;
+    let userToken = "";
+    let vehicles = [];
 
-    // === LOGIN ===
+    // LOGIN
     document.getElementById("loginBtn").addEventListener("click", async () => {
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      if (!email || !password) {
-        alert("Por favor ingresa tu correo y contraseña");
-        return;
-      }
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
 
       const query = `
-        mutation {
-          authUser(authInput: { email: "${email}", password: "${password}" }) {
+        mutation AuthUser($authInput: AuthInput!) {
+          authUser(authInput: $authInput) {
             token
           }
         }
       `;
 
+      const variables = { authInput: { email, password } };
+
       try {
-        const res = await fetch(API_URL, {
+        const response = await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query }),
+          body: JSON.stringify({ query, variables }),
         });
 
-        const data = await res.json();
-        if (data.errors) {
-          alert("Error: " + data.errors[0].message);
-          return;
+        const result = await response.json();
+
+        if (result.data?.authUser?.token) {
+          userToken = result.data.authUser.token;
+          document.getElementById("login-status").innerText = "✅ Login exitoso";
+          document.getElementById("login-section").style.display = "none";
+          document.getElementById("vehicles-section").style.display = "block";
+          loadVehicles();
+        } else {
+          document.getElementById("login-status").innerText = "❌ Credenciales incorrectas";
         }
-
-        token = data.data.authUser.token;
-        localStorage.setItem("token", token);
-        alert("Login exitoso ✅");
-
-        // Muestra la sección de acción
-        document.getElementById("afterLogin").style.display = "block";
       } catch (error) {
         console.error(error);
-        alert("Error en login");
+        document.getElementById("login-status").innerText = "Error de conexión";
       }
     });
 
-    // === BOTÓN "HACER ALGO" ===
-    document.getElementById("actionBtn").addEventListener("click", async () => {
-      if (!token) {
-        alert("Primero inicia sesión");
-        return;
-      }
-
+    // CARGAR VEHÍCULOS
+    async function loadVehicles() {
       const query = `
         query {
           getVehicleInMongo {
             placa
             tipoVehiculo
             rendimientoTeorico
-            CentroOperacion {
-              id
-            }
           }
         }
       `;
 
       try {
-        const res = await fetch(API_URL, {
+        const response = await fetch(API_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer " + token,
+            Authorization: userToken ? `Bearer ${userToken}` : "",
           },
           body: JSON.stringify({ query }),
         });
 
-        const data = await res.json();
+        const result = await response.json();
+        vehicles = result.data?.getVehicleInMongo || [];
+        const select = document.getElementById("vehicleSelect");
 
-        if (data.errors) {
-          console.error(data.errors);
-          alert("Error al obtener vehículos");
-          return;
-        }
-
-        const list = data.data.getVehicleInMongo;
-        const container = document.getElementById("vehicles");
-        container.innerHTML = "";
-
-        if (!list || list.length === 0) {
-          container.textContent = "No hay vehículos registrados.";
-          return;
-        }
-
-        list.forEach(v => {
-          const div = document.createElement("div");
-          div.innerHTML = `
-            <p><strong>${v.placa}</strong> - ${v.tipoVehiculo} - Rendimiento: ${v.rendimientoTeorico} - Centro: ${v.CentroOperacion.id}</p>
-          `;
-          container.appendChild(div);
+        select.innerHTML = '<option value="">-- Selecciona un vehículo --</option>';
+        vehicles.forEach((v, index) => {
+          const opt = document.createElement("option");
+          opt.value = index;
+          opt.textContent = `${v.placa} (${v.tipoVehiculo})`;
+          select.appendChild(opt);
         });
+
+        select.addEventListener("change", showVehicleInfo);
       } catch (error) {
         console.error(error);
-        alert("Error al cargar vehículos");
       }
+    }
+
+    // MOSTRAR INFO DE VEHÍCULO
+    function showVehicleInfo() {
+      const index = document.getElementById("vehicleSelect").value;
+      if (index === "") {
+        document.getElementById("vehicleInfo").innerText = "";
+        return;
+      }
+      const v = vehicles[index];
+      document.getElementById("vehicleInfo").innerText = 
+        `Rendimiento teórico: ${v.rendimientoTeorico}`;
+    }
+
+    // CALCULAR SUMA
+    document.getElementById("calculateBtn").addEventListener("click", () => {
+      const index = document.getElementById("vehicleSelect").value;
+      if (index === "") {
+        alert("Selecciona un vehículo primero");
+        return;
+      }
+
+      const v = vehicles[index];
+      const num1 = parseFloat(document.getElementById("num1").value) || 0;
+      const num2 = parseFloat(document.getElementById("num2").value) || 0;
+      const total = num1 + num2 + (v.rendimientoTeorico || 0);
+
+      document.getElementById("calcResult").innerText = 
+        `Resultado: ${total}`;
+    });
+
+    // BOTÓN EXTRA
+    document.getElementById("doSomethingBtn").addEventListener("click", () => {
+      alert("¡Hiciste algo!");
     });
   </script>
 </body>
