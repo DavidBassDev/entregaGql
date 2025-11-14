@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login + Vehículos + Cálculo</title>
   <style>
-    .centros-list {
+    .centros-list, .tips-list {
       margin-top: 10px;
       padding: 10px;
       border: 1px solid #ccc;
@@ -13,11 +13,17 @@
       max-height: 200px;
       overflow-y: auto;
     }
-    .centro-item {
+    .centro-item, .tip-item {
       padding: 5px;
       margin: 2px 0;
       background: #f5f5f5;
       border-radius: 3px;
+    }
+    .buttons-container {
+      margin: 10px 0;
+    }
+    .buttons-container button {
+      margin: 0 5px;
     }
   </style>
 </head>
@@ -46,13 +52,22 @@
     <input type="number" id="num2" placeholder="Galones Consumidos" /><br />
     <br />
 
-    <button id="calculateBtn">Calcular</button>
-    <button id="doSomethingBtn">Mostrar Centros de Operación</button>
+    <div class="buttons-container">
+      <button id="calculateBtn">Calcular</button>
+      <button id="doSomethingBtn">Mostrar Centros de Operación</button>
+      <button id="tipsBtn">Ver Tips Conducción</button>
+    </div>
 
     <!-- Contenedor para mostrar los centros de operación -->
     <div id="centrosContainer" style="display:none; margin-top: 20px;">
       <h3>Centros de Operación Disponibles</h3>
       <div id="centrosList" class="centros-list"></div>
+    </div>
+
+    <!-- Contenedor para mostrar los tips de conducción -->
+    <div id="tipsContainer" style="display:none; margin-top: 20px;">
+      <h3>Tips para Mejorar el Rendimiento de Combustible</h3>
+      <div id="tipsList" class="tips-list"></div>
     </div>
 
     <p id="calcResult"></p>
@@ -63,6 +78,7 @@
     let userToken = "";
     let vehicles = [];
     let centrosOperacion = [];
+    let tipsConduccion = [];
 
     // LOGIN
     document.getElementById("loginBtn").addEventListener("click", async () => {
@@ -193,20 +209,18 @@
       await loadCentrosOperacion();
     });
 
+    // BOTÓN PARA MOSTRAR TIPS DE CONDUCCIÓN
+    document.getElementById("tipsBtn").addEventListener("click", async () => {
+      await loadTipsConduccion();
+    });
+
     // FUNCIÓN PARA CARGAR CENTROS DE OPERACIÓN
     async function loadCentrosOperacion() {
-      // Primero verifica si ya tenemos los centros cargados
-      if (centrosOperacion.length > 0) {
-        mostrarCentros();
-        return;
-      }
-
       const query = `
         query {
           getCenOpInMongo {
             _id
             nombre
- 
           }
         }
       `;
@@ -236,10 +250,53 @@
       }
     }
 
+    // FUNCIÓN PARA CARGAR TIPS DE CONDUCCIÓN
+    async function loadTipsConduccion() {
+      const query = `
+        query {
+          getPosts {
+            id
+            titulo
+            decripcion
+          }
+        }
+      `;
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: userToken ? `Bearer ${userToken}` : "",
+          },
+          body: JSON.stringify({ query }),
+        });
+
+        const result = await response.json();
+        console.log("Resultado de tips:", result);
+        
+        if (result.data?.getPosts) {
+          tipsConduccion = result.data.getPosts;
+          mostrarTips();
+        } else if (result.errors) {
+          console.error("Error en GraphQL:", result.errors);
+          // Si no existe la query, mostrar tips por defecto
+          mostrarTipsPorDefecto();
+        }
+      } catch (error) {
+        console.error("Error de conexión:", error);
+        // En caso de error, mostrar tips por defecto
+        mostrarTipsPorDefecto();
+      }
+    }
+
     // FUNCIÓN PARA MOSTRAR LOS CENTROS EN LA INTERFAZ
     function mostrarCentros() {
       const container = document.getElementById("centrosContainer");
       const list = document.getElementById("centrosList");
+      
+      // Ocultar tips si están mostrándose
+      document.getElementById("tipsContainer").style.display = "none";
       
       if (centrosOperacion.length === 0) {
         list.innerHTML = "<p>No hay centros de operación disponibles</p>";
@@ -247,14 +304,48 @@
         list.innerHTML = centrosOperacion.map(centro => `
           <div class="centro-item">
             <strong>${centro.nombre}</strong>
-            ${centro.ubicacion ? `<br>Ubicación: ${centro.ubicacion}` : ''}
             <br>ID: ${centro._id}
           </div>
         `).join('');
       }
       
-      // Mostrar u ocultar el contenedor
+      // Mostrar el contenedor
       container.style.display = "block";
+    }
+
+    // FUNCIÓN PARA MOSTRAR LOS TIPS EN LA INTERFAZ
+    function mostrarTips() {
+      const container = document.getElementById("tipsContainer");
+      const list = document.getElementById("tipsList");
+      
+      // Ocultar centros si están mostrándose
+      document.getElementById("centrosContainer").style.display = "none";
+      
+      if (tipsConduccion.length === 0) {
+        list.innerHTML = "<p>No hay tips de conducción disponibles</p>";
+      } else {
+        list.innerHTML = tipsConduccion.map(tip => `
+          <div class="tip-item">
+            <strong>${tip.titulo}</strong>
+            ${tip.decripcion ? `<br>${tip.decripcion}` : ''}
+          </div>
+        `).join('');
+      }
+      
+      // Mostrar el contenedor
+      container.style.display = "block";
+    }
+
+    // FUNCIÓN PARA MOSTRAR TIPS POR DEFECTO (si no existe el resolver)
+    function mostrarTipsPorDefecto() {
+      tipsConduccion = [
+        { id: 1, titulo: "⏱️ Apaga el motor en paradas largas", descripcion: "En semáforos extensos o congestiones vehiculares prolongadas" },
+        { id: 2, titulo: "🚗 Mantén velocidad constante", descripcion: "Evita aceleraciones y frenadas bruscas" },
+        { id: 3, titulo: "🛞 Revisa presión de llantas", descripcion: "Llantas con baja presión aumentan el consumo" },
+        { id: 4, titulo: "🧳 Elimina peso innecesario", descripcion: "Cada 50 kg extra reduce hasta 2% el rendimiento" },
+        { id: 5, titulo: "🌀 Usa aire acondicionado con moderación", descripcion: "Su uso excesivo incrementa el consumo hasta 10%" }
+      ];
+      mostrarTips();
     }
   </script>
 </body>

@@ -2,10 +2,9 @@ import { gql } from "apollo-boost";
 
 export const GET_COPS = gql`
   query {
-    getPosts{
-      id,
-      titulo,
-      decripcion
+    getCenOpInMongo{
+      _id,
+      nombre
     }
   }
 `;
