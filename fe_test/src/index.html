@@ -281,12 +281,12 @@
         } else if (result.errors) {
           console.error("Error en GraphQL:", result.errors);
           // Si no existe la query, mostrar tips por defecto
-          mostrarTipsPorDefecto();
+          
         }
       } catch (error) {
         console.error("Error de conexión:", error);
         // En caso de error, mostrar tips por defecto
-        mostrarTipsPorDefecto();
+        
       }
     }
 
@@ -336,17 +336,7 @@
       container.style.display = "block";
     }
 
-    // FUNCIÓN PARA MOSTRAR TIPS POR DEFECTO (si no existe el resolver)
-    function mostrarTipsPorDefecto() {
-      tipsConduccion = [
-        { id: 1, titulo: "⏱️ Apaga el motor en paradas largas", descripcion: "En semáforos extensos o congestiones vehiculares prolongadas" },
-        { id: 2, titulo: "🚗 Mantén velocidad constante", descripcion: "Evita aceleraciones y frenadas bruscas" },
-        { id: 3, titulo: "🛞 Revisa presión de llantas", descripcion: "Llantas con baja presión aumentan el consumo" },
-        { id: 4, titulo: "🧳 Elimina peso innecesario", descripcion: "Cada 50 kg extra reduce hasta 2% el rendimiento" },
-        { id: 5, titulo: "🌀 Usa aire acondicionado con moderación", descripcion: "Su uso excesivo incrementa el consumo hasta 10%" }
-      ];
-      mostrarTips();
-    }
+    
   </script>
 </body>
 </html>
