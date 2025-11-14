@@ -4,6 +4,22 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Login + Vehículos + Cálculo</title>
+  <style>
+    .centros-list {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .centro-item {
+      padding: 5px;
+      margin: 2px 0;
+      background: #f5f5f5;
+      border-radius: 3px;
+    }
+  </style>
 </head>
 <body>
   <h1>Autenticación y Vehículos</h1>
@@ -25,13 +41,19 @@
     </select>
     <p id="vehicleInfo"></p>
 
-    <h3>Operación con números</h3>
-    <input type="number" id="num1" placeholder="Número 1" /><br />
-    <input type="number" id="num2" placeholder="Número 2" /><br />
+    <h3>Calcular Rendimiento</h3>
+    <input type="number" id="num1" placeholder="Distancia Recorrida" /><br />
+    <input type="number" id="num2" placeholder="Galones Consumidos" /><br />
     <br />
 
     <button id="calculateBtn">Calcular</button>
-    <button id="doSomethingBtn">Hacer algo</button>
+    <button id="doSomethingBtn">Mostrar Centros de Operación</button>
+
+    <!-- Contenedor para mostrar los centros de operación -->
+    <div id="centrosContainer" style="display:none; margin-top: 20px;">
+      <h3>Centros de Operación Disponibles</h3>
+      <div id="centrosList" class="centros-list"></div>
+    </div>
 
     <p id="calcResult"></p>
   </div>
@@ -40,6 +62,7 @@
     const API_URL = "http://localhost:4001/graphql";
     let userToken = "";
     let vehicles = [];
+    let centrosOperacion = [];
 
     // LOGIN
     document.getElementById("loginBtn").addEventListener("click", async () => {
@@ -88,10 +111,10 @@
             placa
             tipoVehiculo
             rendimientoTeorico
-             CentroOperacion {
-            _id
-            nombre
-          }
+            CentroOperacion {
+              _id
+              nombre
+            }
           }
         }
       `;
@@ -114,7 +137,7 @@
         vehicles.forEach((v, index) => {
           const opt = document.createElement("option");
           opt.value = index;
-          opt.textContent = `${v.placa} (${v.tipoVehiculo}) (${v.CentroOperacion.nombre})`;
+          opt.textContent = `${v.placa} (${v.tipoVehiculo}) (${v.CentroOperacion?.nombre || 'Sin centro'})`;
           select.appendChild(opt);
         });
 
@@ -125,33 +148,30 @@
     }
 
     // MOSTRAR INFO DE VEHÍCULO
-    // MOSTRAR INFO DE VEHÍCULO
-function showVehicleInfo() {
-  const index = document.getElementById("vehicleSelect").value;
-  if (index === "") {
-    document.getElementById("vehicleInfo").innerText = "";
-    return;
-  }
-  const v = vehicles[index];
-  
-  let info = `Placa: ${v.placa}\n`;
-  info += `Tipo de vehículo: ${v.tipoVehiculo}\n`;
-  info += `Rendimiento teórico: ${v.rendimientoTeorico}\n`;
-  
-  // Verificar si existe el centro de operación y mostrar sus datos
-  if (v.CentroOperacion && v.CentroOperacion.nombre) {
-    info += `Centro de Operación: ${v.CentroOperacion.nombre}`;
-  } else if (v.CentroOperacion) {
-    // Si solo tienes el ID pero no los datos poblados
-    info += `Centro de Operación ID: ${v.CentroOperacion}`;
-  } else {
-    info += `Centro de Operación: No asignado`;
-  }
-  
-  document.getElementById("vehicleInfo").innerText = info;
-}
+    function showVehicleInfo() {
+      const index = document.getElementById("vehicleSelect").value;
+      if (index === "") {
+        document.getElementById("vehicleInfo").innerText = "";
+        return;
+      }
+      const v = vehicles[index];
+      
+      let info = `Placa: ${v.placa}\n`;
+      info += `Tipo de vehículo: ${v.tipoVehiculo}\n`;
+      info += `Rendimiento teórico: ${v.rendimientoTeorico}\n`;
+      
+      if (v.CentroOperacion && v.CentroOperacion.nombre) {
+        info += `Centro de Operación: ${v.CentroOperacion.nombre}`;
+      } else if (v.CentroOperacion) {
+        info += `Centro de Operación ID: ${v.CentroOperacion}`;
+      } else {
+        info += `Centro de Operación: No asignado`;
+      }
+      
+      document.getElementById("vehicleInfo").innerText = info;
+    }
 
-    // CALCULAR SUMA
+    // CALCULAR RENDIMIENTO DEL VEH
     document.getElementById("calculateBtn").addEventListener("click", () => {
       const index = document.getElementById("vehicleSelect").value;
       if (index === "") {
@@ -162,16 +182,80 @@ function showVehicleInfo() {
       const v = vehicles[index];
       const num1 = parseFloat(document.getElementById("num1").value) || 0;
       const num2 = parseFloat(document.getElementById("num2").value) || 0;
-      const total = num1 + num2 + (v.rendimientoTeorico || 0);
-
+      const total = num1 / num2;
+      const eficiencia = total / (v.rendimientoTeorico || 1) * 100;
       document.getElementById("calcResult").innerText = 
-        `Resultado: ${total}`;
+        `Rendimiento: ${total.toFixed(2)}\nEficiencia: ${eficiencia.toFixed(2)}%`;
     });
 
-    // BOTÓN EXTRA
-    document.getElementById("doSomethingBtn").addEventListener("click", () => {
-      alert("¡Hiciste algo!");
+    // BOTÓN PARA MOSTRAR CENTROS DE OPERACIÓN
+    document.getElementById("doSomethingBtn").addEventListener("click", async () => {
+      await loadCentrosOperacion();
     });
+
+    // FUNCIÓN PARA CARGAR CENTROS DE OPERACIÓN
+    async function loadCentrosOperacion() {
+      // Primero verifica si ya tenemos los centros cargados
+      if (centrosOperacion.length > 0) {
+        mostrarCentros();
+        return;
+      }
+
+      const query = `
+        query {
+          getCenOpInMongo {
+            _id
+            nombre
+ 
+          }
+        }
+      `;
+
+      try {
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: userToken ? `Bearer ${userToken}` : "",
+          },
+          body: JSON.stringify({ query }),
+        });
+
+        const result = await response.json();
+        
+        if (result.data?.getCenOpInMongo) {
+          centrosOperacion = result.data.getCenOpInMongo;
+          mostrarCentros();
+        } else if (result.errors) {
+          console.error("Error en GraphQL:", result.errors);
+          alert("Error al cargar centros de operación: " + result.errors[0].message);
+        }
+      } catch (error) {
+        console.error("Error de conexión:", error);
+        alert("Error de conexión al cargar centros de operación");
+      }
+    }
+
+    // FUNCIÓN PARA MOSTRAR LOS CENTROS EN LA INTERFAZ
+    function mostrarCentros() {
+      const container = document.getElementById("centrosContainer");
+      const list = document.getElementById("centrosList");
+      
+      if (centrosOperacion.length === 0) {
+        list.innerHTML = "<p>No hay centros de operación disponibles</p>";
+      } else {
+        list.innerHTML = centrosOperacion.map(centro => `
+          <div class="centro-item">
+            <strong>${centro.nombre}</strong>
+            ${centro.ubicacion ? `<br>Ubicación: ${centro.ubicacion}` : ''}
+            <br>ID: ${centro._id}
+          </div>
+        `).join('');
+      }
+      
+      // Mostrar u ocultar el contenedor
+      container.style.display = "block";
+    }
   </script>
 </body>
 </html>
