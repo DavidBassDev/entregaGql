@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login + Vehículos + Cálculo</title>
+  <title>Taller GRAPHQL</title>
   <style>
     .centros-list, .tips-list {
       margin-top: 10px;
@@ -28,22 +28,22 @@
   </style>
 </head>
 <body>
-  <h1>Autenticación y Vehículos</h1>
+  <h1>RENDIMIENTO COMBUSTIBLE</h1>
 
-  <!-- Sección de login -->
+  <!-- login-->
   <div id="login-section">
     <h2>Iniciar sesión</h2>
-    <input type="email" id="email" placeholder="Correo electrónico" /><br />
+    <input type="email" id="email" placeholder="Correo electronico" /><br />
     <input type="password" id="password" placeholder="Contraseña" /><br />
     <button id="loginBtn">Login</button>
     <p id="login-status"></p>
   </div>
 
-  <!-- Sección de vehículos -->
+  <!-- vehiculos-->
   <div id="vehicles-section" style="display:none;">
     <h2>Vehículos registrados</h2>
     <select id="vehicleSelect">
-      <option value="">-- Selecciona un vehículo --</option>
+      <option value="">-- Selecciona un vehiculo --</option>
     </select>
     <p id="vehicleInfo"></p>
 
@@ -54,17 +54,17 @@
 
     <div class="buttons-container">
       <button id="calculateBtn">Calcular</button>
-      <button id="doSomethingBtn">Mostrar Centros de Operación</button>
-      <button id="tipsBtn">Ver Tips Conducción</button>
+      <button id="doSomethingBtn">Mostrar Centros de Operacion</button>
+      <button id="tipsBtn">Ver Tips Conduccion</button>
     </div>
 
-    <!-- Contenedor para mostrar los centros de operación -->
+    <!-- Container para mostrar los centros de op -->
     <div id="centrosContainer" style="display:none; margin-top: 20px;">
-      <h3>Centros de Operación Disponibles</h3>
+      <h3>Centros de Operacion creados</h3>
       <div id="centrosList" class="centros-list"></div>
     </div>
 
-    <!-- Contenedor para mostrar los tips de conducción -->
+    <!-- mostrar los tips de conduccion del mock propio -->
     <div id="tipsContainer" style="display:none; margin-top: 20px;">
       <h3>Tips para Mejorar el Rendimiento de Combustible</h3>
       <div id="tipsList" class="tips-list"></div>
@@ -80,7 +80,7 @@
     let centrosOperacion = [];
     let tipsConduccion = [];
 
-    // LOGIN
+    // LOGICA LOGIN
     document.getElementById("loginBtn").addEventListener("click", async () => {
       const email = document.getElementById("email").value;
       const password = document.getElementById("password").value;
@@ -115,11 +115,11 @@
         }
       } catch (error) {
         console.error(error);
-        document.getElementById("login-status").innerText = "Error de conexión";
+        document.getElementById("login-status").innerText = "Error de conexion";
       }
     });
 
-    // CARGAR VEHÍCULOS
+    // CARGAR VEHICULOS DEL QUERY
     async function loadVehicles() {
       const query = `
         query {
@@ -149,11 +149,11 @@
         vehicles = result.data?.getVehicleInMongo || [];
         const select = document.getElementById("vehicleSelect");
 
-        select.innerHTML = '<option value="">-- Selecciona un vehículo --</option>';
+        select.innerHTML = '<option value="">-- Selecciona un vehiculo --</option>';
         vehicles.forEach((v, index) => {
           const opt = document.createElement("option");
           opt.value = index;
-          opt.textContent = `${v.placa} (${v.tipoVehiculo}) (${v.CentroOperacion?.nombre || 'Sin centro'})`;
+          opt.textContent = `${v.placa} (${v.tipoVehiculo}) (${v.CentroOperacion?.nombre || 'Sin centro de op'})`;
           select.appendChild(opt);
         });
 
@@ -163,7 +163,7 @@
       }
     }
 
-    // MOSTRAR INFO DE VEHÍCULO
+    // MOSTRAR INFO DE VEHICULO
     function showVehicleInfo() {
       const index = document.getElementById("vehicleSelect").value;
       if (index === "") {
@@ -173,15 +173,15 @@
       const v = vehicles[index];
       
       let info = `Placa: ${v.placa}\n`;
-      info += `Tipo de vehículo: ${v.tipoVehiculo}\n`;
-      info += `Rendimiento teórico: ${v.rendimientoTeorico}\n`;
+      info += `Tipo de vehiculo: ${v.tipoVehiculo}\n`;
+      info += `Rendimiento teorico: ${v.rendimientoTeorico}\n`;
       
       if (v.CentroOperacion && v.CentroOperacion.nombre) {
-        info += `Centro de Operación: ${v.CentroOperacion.nombre}`;
+        info += `Centro de Operacion: ${v.CentroOperacion.nombre}`;
       } else if (v.CentroOperacion) {
-        info += `Centro de Operación ID: ${v.CentroOperacion}`;
+        info += `Centro de Operacion ID: ${v.CentroOperacion}`;
       } else {
-        info += `Centro de Operación: No asignado`;
+        info += `Centro de Operacion: No asignado`;
       }
       
       document.getElementById("vehicleInfo").innerText = info;
@@ -191,7 +191,7 @@
     document.getElementById("calculateBtn").addEventListener("click", () => {
       const index = document.getElementById("vehicleSelect").value;
       if (index === "") {
-        alert("Selecciona un vehículo primero");
+        alert("Selecciona un vehiculo primero");
         return;
       }
 
@@ -204,17 +204,17 @@
         `Rendimiento: ${total.toFixed(2)}\nEficiencia: ${eficiencia.toFixed(2)}%`;
     });
 
-    // BOTÓN PARA MOSTRAR CENTROS DE OPERACIÓN
+    // MOSTRAR CENTROS DE OPERACION
     document.getElementById("doSomethingBtn").addEventListener("click", async () => {
       await loadCentrosOperacion();
     });
 
-    // BOTÓN PARA MOSTRAR TIPS DE CONDUCCIÓN
+    // MOSTRAR TIPS DE CONDUCCION (NO FUNCIONANDO, ERROR EN EL QUERY)
     document.getElementById("tipsBtn").addEventListener("click", async () => {
       await loadTipsConduccion();
     });
 
-    // FUNCIÓN PARA CARGAR CENTROS DE OPERACIÓN
+    // CARGAR CENTROS DE OPERACION
     async function loadCentrosOperacion() {
       const query = `
         query {
@@ -242,15 +242,15 @@
           mostrarCentros();
         } else if (result.errors) {
           console.error("Error en GraphQL:", result.errors);
-          alert("Error al cargar centros de operación: " + result.errors[0].message);
+          alert("Error al cargar centros de operacion: " + result.errors[0].message);
         }
       } catch (error) {
-        console.error("Error de conexión:", error);
-        alert("Error de conexión al cargar centros de operación");
+        console.error("Error de conexion:", error);
+        alert("Error de conexion al cargar centros de op");
       }
     }
 
-    // FUNCIÓN PARA CARGAR TIPS DE CONDUCCIÓN
+    //  CARGAR TIPS DE CONDUCCION
     async function loadTipsConduccion() {
       const query = `
         query {
@@ -280,26 +280,26 @@
           mostrarTips();
         } else if (result.errors) {
           console.error("Error en GraphQL:", result.errors);
-          // Si no existe la query, mostrar tips por defecto
+          
           
         }
       } catch (error) {
         console.error("Error de conexión:", error);
-        // En caso de error, mostrar tips por defecto
+        
         
       }
     }
 
-    // FUNCIÓN PARA MOSTRAR LOS CENTROS EN LA INTERFAZ
+    // MOSTRAR LOS COPS EN EL HTML
     function mostrarCentros() {
       const container = document.getElementById("centrosContainer");
       const list = document.getElementById("centrosList");
       
-      // Ocultar tips si están mostrándose
+      // Ocultar tips si estan visibles
       document.getElementById("tipsContainer").style.display = "none";
       
       if (centrosOperacion.length === 0) {
-        list.innerHTML = "<p>No hay centros de operación disponibles</p>";
+        list.innerHTML = "<p>No hay centros de operacion creados</p>";
       } else {
         list.innerHTML = centrosOperacion.map(centro => `
           <div class="centro-item">
@@ -309,20 +309,20 @@
         `).join('');
       }
       
-      // Mostrar el contenedor
+      // Mostrar el container
       container.style.display = "block";
     }
 
-    // FUNCIÓN PARA MOSTRAR LOS TIPS EN LA INTERFAZ
+    // MOSTRAR LOS TIPS EN EL HTML
     function mostrarTips() {
       const container = document.getElementById("tipsContainer");
       const list = document.getElementById("tipsList");
       
-      // Ocultar centros si están mostrándose
+      // Ocultar cops si estan visibles
       document.getElementById("centrosContainer").style.display = "none";
       
       if (tipsConduccion.length === 0) {
-        list.innerHTML = "<p>No hay tips de conducción disponibles</p>";
+        list.innerHTML = "<p>No hay tips de conduccion disponibles</p>";
       } else {
         list.innerHTML = tipsConduccion.map(tip => `
           <div class="tip-item">
