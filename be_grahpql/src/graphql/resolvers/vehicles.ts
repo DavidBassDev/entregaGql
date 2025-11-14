@@ -63,16 +63,23 @@ const vehiclesResolver: IResolvers = {
       return updatedVehicle;
     },
 
-    deleteVehicle: (parent, { placa }) => {
-      const vehicleIndex = VehicleDataSource.findIndex(v => v.placa === placa);
+    deleteVehicle: async (parent, { placa }, context: Db) => {
+  try {
+    const result = await context
+      .collection("vehicle")
+      .deleteOne({ placa: placa });
 
-      if (vehicleIndex === -1) {
-        throw new Error(`Vehicle with placa ${placa} not found.`);
-      }
-
-      VehicleDataSource.splice(vehicleIndex, 1);
-      return true;
+    if (result.deletedCount === 0) {
+      throw new Error(`Vehicle with placa ${placa} not found.`);
     }
+
+    return true;
+  } catch (error) {
+    console.error(error);
+    return false;
+  }
+}
+
   }
 };
 

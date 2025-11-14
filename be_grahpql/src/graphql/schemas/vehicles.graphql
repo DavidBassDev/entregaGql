@@ -8,11 +8,11 @@ type Vehicle {
     placa: String!
     tipoVehiculo: String!
     rendimientoTeorico: Float!
-    CentroOperacion : [CentroOperacion]
+    CentroOperacion : CentroOperacion
 }
 
 type Mutation {
-    createVehicleInMongo(vehicle: VehicleInput!): String
+    createVehicleInMongo(vehicle: VehicleInput!): Vehicle
     updateVehicle(placa: String!, input: VehicleEdit): Vehicle
     deleteVehicle(placa: String!): Boolean
 }
@@ -26,8 +26,8 @@ input VehicleEdit {
 input VehicleInput {
     placa: String!
     tipoVehiculo: String!
-    rendimientoTeorico: Float
-    CentroOperacion: [String]
+    rendimientoTeorico: Float!
+    CentroOperacion: ID
 }
 extend type Mutation {
   createVehicle(vehicle: VehicleInput!): Vehicle

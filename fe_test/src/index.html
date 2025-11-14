@@ -110,7 +110,7 @@
         vehicles.forEach((v, index) => {
           const opt = document.createElement("option");
           opt.value = index;
-          opt.textContent = `${v.placa} (${v.tipoVehiculo})`;
+          opt.textContent = `${v.placa} (${v.tipoVehiculo}) (${v.centroOperacion})`;
           select.appendChild(opt);
         });
 
@@ -129,7 +129,8 @@
       }
       const v = vehicles[index];
       document.getElementById("vehicleInfo").innerText = 
-        `Rendimiento teórico: ${v.rendimientoTeorico}`;
+        `Rendimiento teorico: ${v.rendimientoTeorico}`;
+        
     }
 
     // CALCULAR SUMA

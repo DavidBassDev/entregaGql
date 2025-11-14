@@ -5,7 +5,7 @@ type Query{
 }
 
 type CentroOperacion {
-id: ID 
+_id: ID!
 nombre: String!
 
 }
@@ -19,6 +19,6 @@ type Mutation {
 }
 
 input CopInput {
-    _id: ID!
+    
     nombre: String!
 }
