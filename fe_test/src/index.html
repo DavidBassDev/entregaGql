@@ -88,6 +88,10 @@
             placa
             tipoVehiculo
             rendimientoTeorico
+             CentroOperacion {
+            _id
+            nombre
+          }
           }
         }
       `;
@@ -110,7 +114,7 @@
         vehicles.forEach((v, index) => {
           const opt = document.createElement("option");
           opt.value = index;
-          opt.textContent = `${v.placa} (${v.tipoVehiculo}) (${v.centroOperacion})`;
+          opt.textContent = `${v.placa} (${v.tipoVehiculo}) (${v.CentroOperacion.nombre})`;
           select.appendChild(opt);
         });
 
@@ -121,17 +125,31 @@
     }
 
     // MOSTRAR INFO DE VEHÍCULO
-    function showVehicleInfo() {
-      const index = document.getElementById("vehicleSelect").value;
-      if (index === "") {
-        document.getElementById("vehicleInfo").innerText = "";
-        return;
-      }
-      const v = vehicles[index];
-      document.getElementById("vehicleInfo").innerText = 
-        `Rendimiento teorico: ${v.rendimientoTeorico}`;
-        
-    }
+    // MOSTRAR INFO DE VEHÍCULO
+function showVehicleInfo() {
+  const index = document.getElementById("vehicleSelect").value;
+  if (index === "") {
+    document.getElementById("vehicleInfo").innerText = "";
+    return;
+  }
+  const v = vehicles[index];
+  
+  let info = `Placa: ${v.placa}\n`;
+  info += `Tipo de vehículo: ${v.tipoVehiculo}\n`;
+  info += `Rendimiento teórico: ${v.rendimientoTeorico}\n`;
+  
+  // Verificar si existe el centro de operación y mostrar sus datos
+  if (v.CentroOperacion && v.CentroOperacion.nombre) {
+    info += `Centro de Operación: ${v.CentroOperacion.nombre}`;
+  } else if (v.CentroOperacion) {
+    // Si solo tienes el ID pero no los datos poblados
+    info += `Centro de Operación ID: ${v.CentroOperacion}`;
+  } else {
+    info += `Centro de Operación: No asignado`;
+  }
+  
+  document.getElementById("vehicleInfo").innerText = info;
+}
 
     // CALCULAR SUMA
     document.getElementById("calculateBtn").addEventListener("click", () => {
