@@ -6,7 +6,7 @@ const PostResolver: IResolvers = {
     Query: {
        async getPosts() {
             try {
-                const response = await axios.get('https://my-json-server.typicode.com/typicode/demo/posts');
+                const response = await axios.get('https://691747e6a7a34288a28034f3.mockapi.io/post');
                 return response.data;
               } catch (error) {
                 console.error('Error fetching Posts:', error);
